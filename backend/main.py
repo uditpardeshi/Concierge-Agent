@@ -54,17 +54,13 @@ async def chat(message: Message):
         if not api_key:
             return {"response": "Error: GEMINI_API_KEY not found in .env file"}
         
-        model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
-            generation_config={
-                'temperature': 0.8,
-                'top_p': 0.9,
-                'max_output_tokens': 512,
-            },
-            system_instruction=system_prompt
-        )
+        model = genai.GenerativeModel('gemini-pro')
         
-        chat_session = model.start_chat(history=conversations[session_id])
+        history = conversations[session_id].copy()
+        if not history:
+            history = [{"role": "user", "parts": [system_prompt]}, {"role": "model", "parts": ["Understood. I'll provide concise, professional concierge service."]}]
+        
+        chat_session = model.start_chat(history=history)
         response = chat_session.send_message(message.content)
         
         conversations[session_id].append({"role": "user", "parts": [message.content]})
