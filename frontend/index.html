@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Routine AI</title>
+    <title>AI Concierge Agent</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: #1a1a1a; color: #e0e0e0; height: 100vh; overflow: hidden; }
@@ -12,16 +12,16 @@
         @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        .sidebar { width: 260px; background: #0d0d0d; display: flex; flex-direction: column; padding: 12px; border-right: 1px solid #2a2a2a; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .sidebar.collapsed { width: 50px; }
-        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-        .sidebar-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #888; cursor: pointer; border-radius: 8px; transition: all 0.2s ease; font-size: 18px; }
+        .sidebar { width: 240px; background: #0d0d0d; display: flex; flex-direction: column; padding: 8px; border-right: 1px solid #2a2a2a; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar.collapsed { width: 45px; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .sidebar-icon { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #888; cursor: pointer; border-radius: 6px; transition: all 0.2s ease; font-size: 16px; }
         .sidebar-icon:hover { background: #2a2a2a; color: #fff; transform: scale(1.05); }
-        .new-chat-btn { width: 100%; background: linear-gradient(135deg, #2a2a2a 0%, #252525 100%); border: 1px solid #3a3a3a; border-radius: 10px; padding: 12px; color: #e0e0e0; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; margin-bottom: 16px; transition: all 0.2s ease; font-weight: 500; }
-        .new-chat-btn:hover { background: linear-gradient(135deg, #333 0%, #2a2a2a 100%); border-color: #4a4a4a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .new-chat-btn { width: 100%; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); border: none; border-radius: 8px; padding: 10px; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; margin-bottom: 12px; transition: all 0.2s ease; font-weight: 600; box-shadow: 0 3px 10px rgba(59, 130, 246, 0.3); }
+        .new-chat-btn:hover { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4); }
         .new-chat-btn:active { transform: translateY(0); }
         .chat-history { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
-        .chat-item { padding: 10px; border-radius: 6px; color: #888; cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.2s ease; animation: slideIn 0.3s ease; }
+        .chat-item { padding: 8px 10px; border-radius: 6px; color: #888; cursor: pointer; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: all 0.2s ease; animation: slideIn 0.3s ease; }
         .chat-item:hover { background: #2a2a2a; color: #e0e0e0; transform: translateX(4px); }
         .chat-item.active { background: #2a2a2a; color: #e0e0e0; }
         .sidebar.collapsed .new-chat-btn span, .sidebar.collapsed .chat-item { display: none; }
@@ -29,32 +29,43 @@
         .mobile-menu-btn { display: none; position: fixed; top: 16px; left: 16px; z-index: 50; width: 40px; height: 40px; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 10px; align-items: center; justify-content: center; color: #e0e0e0; font-size: 20px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease; animation: scaleIn 0.3s ease; }
         .mobile-menu-btn:hover { background: #333; transform: scale(1.1); }
         .mobile-menu-btn:active { transform: scale(0.95); }
-        .welcome { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px; animation: fadeIn 0.5s ease; }
-        .welcome h1 { font-size: 36px; font-weight: 300; color: #b0b0b0; margin-bottom: 8px; letter-spacing: -0.5px; }
-        .welcome h2 { font-size: 36px; font-weight: 400; color: #e0e0e0; margin-bottom: 16px; letter-spacing: -0.5px; }
-        .welcome p { color: #888; font-size: 15px; margin-bottom: 40px; line-height: 1.6; }
-        .prompts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; max-width: 950px; margin-bottom: 40px; }
-        .prompt-card { background: linear-gradient(135deg, #2a2a2a 0%, #252525 100%); border: 1px solid #3a3a3a; border-radius: 12px; padding: 18px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-height: 90px; display: flex; flex-direction: column; justify-content: space-between; }
-        .prompt-card:hover { background: linear-gradient(135deg, #333 0%, #2a2a2a 100%); border-color: #5a5a5a; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
-        .prompt-card p { font-size: 13px; color: #c0c0c0; line-height: 1.5; margin-bottom: 10px; font-weight: 400; }
-        .prompt-icon { color: #777; font-size: 18px; }
-        .refresh { color: #888; font-size: 13px; cursor: pointer; margin-bottom: 20px; transition: all 0.2s ease; }
-        .refresh:hover { color: #fff; transform: scale(1.05); }
-        .chat-container { flex: 1; overflow-y: auto; padding: 24px 40px; display: none; flex-direction: column; gap: 18px; scroll-behavior: smooth; }
+        .welcome { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 30px 20px; animation: fadeIn 0.5s ease; overflow-y: auto; overflow-x: hidden; }
+        .welcome::-webkit-scrollbar { width: 6px; }
+        .welcome::-webkit-scrollbar-track { background: transparent; }
+        .welcome::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
+        .welcome::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
+        .welcome-content { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 950px; padding-top: 40px; }
+        .welcome h1 { font-size: 32px; font-weight: 600; background: linear-gradient(135deg, #8ab4f8 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .welcome h2 { font-size: 22px; font-weight: 400; color: #e0e0e0; margin-bottom: 12px; letter-spacing: -0.3px; }
+        .welcome p { color: #999; font-size: 14px; margin-bottom: 32px; line-height: 1.5; text-align: center; max-width: 550px; }
+        .prompts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 900px; margin-bottom: 24px; }
+        .prompt-card { background: linear-gradient(135deg, #2a2a2a 0%, #252525 100%); border: 1px solid #3a3a3a; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); min-height: 80px; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; }
+        .prompt-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #8ab4f8, #a78bfa); transform: scaleX(0); transition: transform 0.3s ease; }
+        .prompt-card:hover::before { transform: scaleX(1); }
+        .prompt-card:hover { background: linear-gradient(135deg, #333 0%, #2a2a2a 100%); border-color: #5a5a5a; transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.5); }
+        .prompt-card p { font-size: 12px; color: #c0c0c0; line-height: 1.4; margin-bottom: 8px; font-weight: 400; }
+        .prompt-icon { color: #777; font-size: 16px; }
+        .refresh { color: #888; font-size: 12px; cursor: pointer; margin-bottom: 16px; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; background: #2a2a2a; border-radius: 6px; border: 1px solid #3a3a3a; }
+        .refresh:hover { color: #fff; transform: scale(1.05); background: #333; border-color: #4a4a4a; }
+        .refresh:active { transform: scale(0.98); }
+        .chat-container { flex: 1; overflow-y: auto; padding: 16px 24px; display: none; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
         .chat-container.active { display: flex; }
         .chat-container::-webkit-scrollbar { width: 6px; }
         .chat-container::-webkit-scrollbar-track { background: transparent; }
         .chat-container::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 3px; }
         .chat-container::-webkit-scrollbar-thumb:hover { background: #4a4a4a; }
-        .message { padding: 14px 18px; border-radius: 12px; max-width: 70%; word-wrap: break-word; line-height: 1.6; font-size: 15px; white-space: pre-wrap; animation: fadeIn 0.3s ease; }
+        .message { padding: 12px 16px; border-radius: 10px; max-width: 70%; word-wrap: break-word; line-height: 1.5; font-size: 14px; white-space: pre-wrap; animation: fadeIn 0.3s ease; }
         .user { background: linear-gradient(135deg, #2a2a2a 0%, #252525 100%); color: #e8e8e8; align-self: flex-end; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
         .assistant { background: transparent; color: #b8b8b8; align-self: flex-start; }
-        .input-container { padding: 24px 40px 28px; background: linear-gradient(to top, #1a1a1a 0%, transparent 100%); }
-        .input-wrapper { max-width: 900px; margin: 0 auto; background: linear-gradient(135deg, #2a2a2a 0%, #252525 100%); border: 1px solid #3a3a3a; border-radius: 28px; padding: 14px 20px; display: flex; align-items: center; gap: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+        .input-container { padding: 16px 24px 20px; background: linear-gradient(to top, #1a1a1a 0%, transparent 100%); }
+        .input-wrapper { max-width: 900px; margin: 0 auto; background: linear-gradient(135deg, #2a2a2a 0%, #252525 100%); border: 1px solid #3a3a3a; border-radius: 24px; padding: 10px 16px; display: flex; align-items: center; gap: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
         .input-wrapper.focused { border-color: #8ab4f8; box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.15), 0 6px 24px rgba(138, 180, 248, 0.25); background: linear-gradient(135deg, #2d2d2d 0%, #282828 100%); }
-        input { flex: 1; background: transparent; border: none; outline: none; color: #e8e8e8; font-size: 15px; padding: 4px 0; }
+        .input-actions { display: flex; gap: 8px; }
+        .action-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: #666; cursor: pointer; border-radius: 5px; transition: all 0.2s; font-size: 14px; }
+        .action-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+        input { flex: 1; background: transparent; border: none; outline: none; color: #e8e8e8; font-size: 14px; padding: 2px 0; }
         input::placeholder { color: #666; }
-        .send-btn { background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%); color: #000; border: none; border-radius: 10px; padding: 8px 16px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(255,255,255,0.1); }
+        .send-btn { background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%); color: #000; border: none; border-radius: 8px; padding: 6px 14px; cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s ease; box-shadow: 0 2px 6px rgba(255,255,255,0.1); }
         .send-btn:hover { background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,255,255,0.15); }
         .send-btn:active { transform: translateY(0); }
         .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
@@ -64,15 +75,16 @@
             .sidebar.collapsed { transform: translateX(-100%); }
             .sidebar:not(.collapsed) { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,0.5); }
             .main { width: 100%; }
-            .welcome h1, .welcome h2 { font-size: 24px; }
-            .welcome p { font-size: 14px; }
+            .welcome h1 { font-size: 24px; }
+            .welcome h2 { font-size: 18px; }
+            .welcome p { font-size: 13px; }
             .prompts { grid-template-columns: 1fr; gap: 10px; max-width: 100%; }
-            .chat-container { padding: 16px 20px; }
-            .message { max-width: 85%; font-size: 14px; }
-            .input-container { padding: 16px 20px 20px; }
-            .input-wrapper { padding: 12px 16px; }
-            input { font-size: 14px; }
-            .send-btn { padding: 8px 14px; font-size: 13px; }
+            .chat-container { padding: 12px 16px; }
+            .message { max-width: 85%; font-size: 13px; }
+            .input-container { padding: 12px 16px 16px; }
+            .input-wrapper { padding: 8px 12px; }
+            input { font-size: 13px; }
+            .send-btn { padding: 6px 12px; font-size: 12px; }
         }
     </style>
 </head>
@@ -91,33 +103,38 @@
         <div class="main">
             <div class="mobile-menu-btn" onclick="toggleSidebar()">☰</div>
             <div class="welcome" id="welcome">
-                <h1>Hi there, User</h1>
-                <h2>What would like to know?</h2>
-                <p>Use one of the most common prompts<br>below or use your own to begin</p>
-                <div class="prompts">
-                    <div class="prompt-card" onclick="usePrompt('Create a morning routine for a productive day')">
-                        <p>Create a morning routine for a productive day</p>
-                        <div class="prompt-icon">🌅</div>
+                <div class="welcome-content">
+                    <h1>🤵 Your Personal Concierge</h1>
+                    <h2>5-Star Service, Available 24/7</h2>
+                    <p>Expert recommendations, reservations, travel arrangements, and personalized assistance<br>Combining human expertise with digital efficiency</p>
+                    <div class="prompts">
+                    <div class="prompt-card" onclick="usePrompt('Plan a weekend trip to Paris with restaurant recommendations')">
+                        <p>Plan a weekend trip to Paris with restaurant recommendations</p>
+                        <div class="prompt-icon">✈️</div>
                     </div>
-                    <div class="prompt-card" onclick="usePrompt('Help me plan a balanced daily schedule with work and exercise')">
-                        <p>Help me plan a balanced daily schedule with work and exercise</p>
-                        <div class="prompt-icon">⚖️</div>
+                    <div class="prompt-card" onclick="usePrompt('Help me organize my work tasks for this week')">
+                        <p>Help me organize my work tasks for this week</p>
+                        <div class="prompt-icon">📋</div>
                     </div>
-                    <div class="prompt-card" onclick="usePrompt('Build an evening routine for better sleep')">
-                        <p>Build an evening routine for better sleep</p>
-                        <div class="prompt-icon">🌙</div>
+                    <div class="prompt-card" onclick="usePrompt('Suggest a healthy meal plan for the next 3 days')">
+                        <p>Suggest a healthy meal plan for the next 3 days</p>
+                        <div class="prompt-icon">🥗</div>
                     </div>
-                    <div class="prompt-card" onclick="usePrompt('Design a weekend routine for rest and hobbies')">
-                        <p>Design a weekend routine for rest and hobbies</p>
-                        <div class="prompt-icon">🎨</div>
+                    <div class="prompt-card" onclick="usePrompt('Find the perfect gift for a tech enthusiast')">
+                        <p>Find the perfect gift for a tech enthusiast</p>
+                        <div class="prompt-icon">🎁</div>
                     </div>
+                    </div>
+                    <div class="refresh" onclick="refreshPrompts()">🔄 Refresh Prompts</div>
                 </div>
-                <div class="refresh" onclick="location.reload()">🔄 Refresh Prompts</div>
             </div>
             <div class="chat-container" id="chatContainer"></div>
             <div class="input-container">
                 <div class="input-wrapper">
-                    <input type="text" id="userInput" placeholder="Ask about your daily routine..." />
+                    <div class="input-actions">
+                        <button class="action-btn" title="Clear Chat" onclick="clearCurrentChat()">🗑️</button>
+                    </div>
+                    <input type="text" id="userInput" placeholder="Ask me anything..." />
                     <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
                 </div>
             </div>
@@ -134,9 +151,25 @@
         let sessionId = "session_" + Date.now();
         let chats = [];
         let currentChatId = null;
-
         if (window.innerWidth <= 768) {
             document.getElementById("sidebar").classList.add("collapsed");
+        }
+
+        async function clearCurrentChat() {
+            if (confirm('Clear this conversation?')) {
+                try {
+                    await fetch(`${API_URL}/clear`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ session_id: sessionId })
+                    });
+                    chatContainer.innerHTML = "";
+                    chatContainer.classList.remove("active");
+                    welcome.style.display = "flex";
+                } catch (error) {
+                    console.error('Error clearing chat:', error);
+                }
+            }
         }
 
         function toggleSidebar(e) {
@@ -271,6 +304,36 @@
                 sendBtn.disabled = false;
                 userInput.focus();
             }
+        }
+
+        const promptSuggestions = [
+            { text: 'Book a table at the best Italian restaurant tonight', icon: '🍽️' },
+            { text: 'Arrange airport transfer and hotel check-in for tomorrow', icon: '🚖' },
+            { text: 'Find exclusive tickets to a sold-out concert', icon: '🎫' },
+            { text: 'Plan a romantic anniversary dinner with special touches', icon: '💖' },
+            { text: 'Organize a full-day city tour with local experiences', icon: '🗺️' },
+            { text: 'Book spa treatments and wellness services', icon: '🧘' },
+            { text: 'Arrange private car service for business meetings', icon: '🚘' },
+            { text: 'Get VIP access to exclusive events and venues', icon: '⭐' },
+            { text: 'Handle last-minute travel changes and rebooking', icon: '⏱️' },
+            { text: 'Recommend hidden gem restaurants locals love', icon: '🍴' },
+            { text: 'Secure hard-to-get reservations at top venues', icon: '🔑' },
+            { text: 'Plan surprise celebration with all arrangements', icon: '🎉' },
+            { text: 'Coordinate multi-city travel itinerary', icon: '✈️' },
+            { text: 'Find personal shopper for luxury shopping', icon: '🛍️' },
+            { text: 'Arrange childcare and family-friendly activities', icon: '👶' },
+            { text: 'Book emergency services or handle urgent requests', icon: '🆘' }
+        ];
+
+        function refreshPrompts() {
+            const promptsContainer = document.querySelector('.prompts');
+            const shuffled = promptSuggestions.sort(() => 0.5 - Math.random()).slice(0, 4);
+            promptsContainer.innerHTML = shuffled.map(prompt => 
+                `<div class="prompt-card" onclick="usePrompt('${prompt.text}')">
+                    <p>${prompt.text}</p>
+                    <div class="prompt-icon">${prompt.icon}</div>
+                </div>`
+            ).join('');
         }
 
         userInput.addEventListener("keypress", (e) => {
