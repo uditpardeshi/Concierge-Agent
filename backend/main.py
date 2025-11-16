@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import os
-import google.generativeai as genai
+import requests
 from dotenv import load_dotenv
 from pathlib import Path
 
@@ -15,9 +15,8 @@ frontend_path = Path(__file__).parent.parent / "frontend"
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
 conversations = {}
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 
-system_prompt = """You are an elite AI Concierge providing 5-star service. Be warm, professional, and CONCISE.
+system_prompt = """You are an elite AI Concierge providing 5-star service. Be warm, professional, and helpful.
 
 **Your Expertise:**
 - Dining, travel, events, and activity recommendations
@@ -27,13 +26,13 @@ system_prompt = """You are an elite AI Concierge providing 5-star service. Be wa
 - 24/7 availability with instant responses
 
 **Response Style:**
-- Keep answers SHORT and to the point (2-4 sentences max)
-- Use bullet points for lists (max 3-4 items)
-- Be direct and actionable
-- Skip lengthy explanations unless asked
-- Offer to elaborate if they want more details
+- Provide clear, informative answers (4-6 sentences)
+- Use bullet points when listing options or steps
+- Be thorough but not overwhelming
+- Include relevant details and context
+- Offer additional help when appropriate
 
-**Tone:** Professional, warm, efficient - like a skilled concierge who values your time."""
+**Tone:** Professional, warm, knowledgeable - like a skilled concierge who provides complete assistance."""
 
 class Message(BaseModel):
     content: str
@@ -50,23 +49,44 @@ async def chat(message: Message):
         if session_id not in conversations:
             conversations[session_id] = []
         
-        api_key = os.getenv('GEMINI_API_KEY')
+        conversations[session_id].append({
+            "role": "user",
+            "content": message.content
+        })
+        
+        api_key = os.getenv('GROQ_API_KEY')
         if not api_key:
-            return {"response": "Error: GEMINI_API_KEY not found in .env file"}
+            return {"response": "Error: GROQ_API_KEY not found in .env file"}
         
-        model = genai.GenerativeModel('gemini-pro')
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "system", "content": system_prompt}] + conversations[session_id],
+                "max_tokens": 1024,
+                "temperature": 0.8,
+                "top_p": 0.9,
+                "frequency_penalty": 0.3,
+                "presence_penalty": 0.2
+            },
+            timeout=30,
+            verify=True
+        )
         
-        history = conversations[session_id].copy()
-        if not history:
-            history = [{"role": "user", "parts": [system_prompt]}, {"role": "model", "parts": ["Understood. I'll provide concise, professional concierge service."]}]
+        if response.status_code != 200:
+            return {"response": f"API Error: {response.text}"}
         
-        chat_session = model.start_chat(history=history)
-        response = chat_session.send_message(message.content)
+        assistant_message = response.json()["choices"][0]["message"]["content"]
+        conversations[session_id].append({
+            "role": "assistant",
+            "content": assistant_message
+        })
         
-        conversations[session_id].append({"role": "user", "parts": [message.content]})
-        conversations[session_id].append({"role": "model", "parts": [response.text]})
-        
-        return {"response": response.text}
+        return {"response": assistant_message}
     except Exception as e:
         return {"response": f"Error: {str(e)}"}
 
