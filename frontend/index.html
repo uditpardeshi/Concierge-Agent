@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Concierge Agent</title>
+    <title>Multi-Agent System - Enhanced Chat</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: #1a1a1a; color: #e0e0e0; height: 100vh; overflow: hidden; }
@@ -12,6 +15,37 @@
         @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Mode-specific themes */
+        .app { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .app.concierge-mode {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a1a2a 100%);
+        }
+        .app.concierge-mode .sidebar { background: linear-gradient(135deg, #0d0d0d 0%, #1a0d1a 100%); }
+        .app.concierge-mode .welcome h1 { background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app.concierge-mode .new-chat-btn { background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%); }
+        
+        .app.parallel-mode {
+            background: linear-gradient(135deg, #1a1a1a 0%, #1a2a1a 100%);
+        }
+        .app.parallel-mode .sidebar { background: linear-gradient(135deg, #0d0d0d 0%, #0d1a0d 100%); }
+        .app.parallel-mode .welcome h1 { background: linear-gradient(135deg, #00ff88 0%, #00cc66 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app.parallel-mode .new-chat-btn { background: linear-gradient(135deg, #00ff88 0%, #00aa55 100%); }
+        
+        .app.sequential-mode {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1a 100%);
+        }
+        .app.sequential-mode .sidebar { background: linear-gradient(135deg, #0d0d0d 0%, #1a0d0d 100%); }
+        .app.sequential-mode .welcome h1 { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app.sequential-mode .new-chat-btn { background: linear-gradient(135deg, #ff6b6b 0%, #cc5555 100%); }
+        
+        .app.loop-mode {
+            background: linear-gradient(135deg, #1a1a1a 0%, #1a1a2a 100%);
+        }
+        .app.loop-mode .sidebar { background: linear-gradient(135deg, #0d0d0d 0%, #0d0d1a 100%); }
+        .app.loop-mode .welcome h1 { background: linear-gradient(135deg, #8a2be2 0%, #9932cc 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .app.loop-mode .new-chat-btn { background: linear-gradient(135deg, #8a2be2 0%, #7b68ee 100%); }
         .sidebar { width: 240px; background: #0d0d0d; display: flex; flex-direction: column; padding: 8px; border-right: 1px solid #2a2a2a; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .sidebar.collapsed { width: 45px; }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -107,34 +141,20 @@
             <div class="mobile-menu-btn" onclick="toggleSidebar()">☰</div>
             <div class="welcome" id="welcome">
                 <div class="welcome-content">
-                    <h1>🤵 Your Personal Concierge</h1>
-                    <h2>5-Star Service, Available 24/7</h2>
-                    <p>Expert recommendations, reservations, travel arrangements, and personalized assistance<br>Combining human expertise with digital efficiency</p>
-                    <div class="prompts">
-                    <div class="prompt-card" onclick="usePrompt('Plan a weekend trip to Paris with restaurant recommendations')">
-                        <p>Plan a weekend trip to Paris with restaurant recommendations</p>
-                        <div class="prompt-icon">✈️</div>
+                    <h1 id="modeTitle">AI Concierge</h1>
+                    <h2 id="modeSubtitle">Personal Assistant Service</h2>
+                    <p id="modeDescription">Your dedicated personal assistant for daily tasks, scheduling, and information<br>Switch modes in the top-right corner for different AI capabilities</p>
+                    <div class="prompts" id="modePrompts">
+
                     </div>
-                    <div class="prompt-card" onclick="usePrompt('Help me organize my work tasks for this week')">
-                        <p>Help me organize my work tasks for this week</p>
-                        <div class="prompt-icon">📋</div>
-                    </div>
-                    <div class="prompt-card" onclick="usePrompt('Suggest a healthy meal plan for the next 3 days')">
-                        <p>Suggest a healthy meal plan for the next 3 days</p>
-                        <div class="prompt-icon">🥗</div>
-                    </div>
-                    <div class="prompt-card" onclick="usePrompt('Find the perfect gift for a tech enthusiast')">
-                        <p>Find the perfect gift for a tech enthusiast</p>
-                        <div class="prompt-icon">🎁</div>
-                    </div>
-                    </div>
-                    <div class="refresh" onclick="refreshPrompts()">🔄 Refresh Prompts</div>
+                    <div class="refresh" onclick="refreshPrompts()" id="refreshBtn">🔄 Refresh Prompts</div>
                 </div>
             </div>
             <div class="chat-container" id="chatContainer"></div>
             <div class="input-container">
                 <div class="input-wrapper">
                     <div class="input-actions">
+                        <button class="action-btn" title="Save Chat" onclick="saveChatToFile()">💾</button>
                         <button class="action-btn" title="Clear Chat" onclick="clearCurrentChat()">🗑️</button>
                     </div>
                     <input type="text" id="userInput" placeholder="Ask me anything..." />
@@ -145,6 +165,8 @@
     </div>
 
     <script>
+        console.log('Multi-Agent System UI v3.0 Loading...');
+        
         const API_URL = "";
         const chatContainer = document.getElementById("chatContainer");
         const welcome = document.getElementById("welcome");
@@ -154,10 +176,48 @@
         let sessionId = "session_" + Date.now();
         let chats = [];
         let currentChatId = null;
-        if (window.innerWidth <= 768) {
-            document.getElementById("sidebar").classList.add("collapsed");
-        }
+        
+        // Start with sidebar collapsed by default
+        document.getElementById("sidebar").classList.add("collapsed");
 
+        // Core functions
+        function saveChatToFile() {
+            if (chatContainer.children.length === 0) {
+                alert('No conversation to save!');
+                return;
+            }
+            
+            const messages = Array.from(chatContainer.children).map(msg => {
+                const sender = msg.classList.contains('user') ? 'User' : 'Assistant';
+                return `${sender}: ${msg.textContent}`;
+            });
+            
+            const mode = window.currentAgentMode || 'concierge';
+            const timestamp = new Date().toLocaleString();
+            const content = `Multi-Agent System Chat Export\nMode: ${mode}\nDate: ${timestamp}\nSession: ${sessionId}\n\n${'='.repeat(50)}\n\n${messages.join('\n\n')}\n\n${'='.repeat(50)}\n\nEnd of conversation`;
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chat_${mode}_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Show feedback
+            const feedback = document.createElement('div');
+            feedback.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #27ae60; color: white; padding: 10px 20px; border-radius: 8px; z-index: 2000; font-size: 13px; font-weight: bold; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);';
+            feedback.textContent = '✓ Chat saved successfully!';
+            document.body.appendChild(feedback);
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                feedback.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => feedback.remove(), 300);
+            }, 2000);
+        }
+        
         async function clearCurrentChat() {
             if (confirm('Clear this conversation?')) {
                 try {
@@ -294,7 +354,11 @@
                 const response = await fetch(`${API_URL}/chat`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ content: text, session_id: sessionId })
+                    body: JSON.stringify({ 
+                        content: text, 
+                        session_id: sessionId,
+                        execution_mode: getCurrentMode()
+                    })
                 });
 
                 const data = await response.json();
@@ -309,39 +373,199 @@
             }
         }
 
-        const promptSuggestions = [
-            { text: 'Book a table at the best Italian restaurant tonight', icon: '🍽️' },
-            { text: 'Arrange airport transfer and hotel check-in for tomorrow', icon: '🚖' },
-            { text: 'Find exclusive tickets to a sold-out concert', icon: '🎫' },
-            { text: 'Plan a romantic anniversary dinner with special touches', icon: '💖' },
-            { text: 'Organize a full-day city tour with local experiences', icon: '🗺️' },
-            { text: 'Book spa treatments and wellness services', icon: '🧘' },
-            { text: 'Arrange private car service for business meetings', icon: '🚘' },
-            { text: 'Get VIP access to exclusive events and venues', icon: '⭐' },
-            { text: 'Handle last-minute travel changes and rebooking', icon: '⏱️' },
-            { text: 'Recommend hidden gem restaurants locals love', icon: '🍴' },
-            { text: 'Secure hard-to-get reservations at top venues', icon: '🔑' },
-            { text: 'Plan surprise celebration with all arrangements', icon: '🎉' },
-            { text: 'Coordinate multi-city travel itinerary', icon: '✈️' },
-            { text: 'Find personal shopper for luxury shopping', icon: '🛍️' },
-            { text: 'Arrange childcare and family-friendly activities', icon: '👶' },
-            { text: 'Book emergency services or handle urgent requests', icon: '🆘' }
-        ];
-
+        const modeConfigs = {
+            concierge: {
+                title: 'AI Concierge',
+                subtitle: 'Personal Assistant Service',
+                description: 'Your dedicated personal assistant for daily tasks, scheduling, and information<br>Switch modes in the top-right corner for different AI capabilities',
+                prompts: [
+                    { text: 'Help me plan my day and schedule appointments', icon: '📅' },
+                    { text: 'Find restaurants and make dinner reservations', icon: '🍽️' },
+                    { text: 'Book travel arrangements and accommodations', icon: '✈️' },
+                    { text: 'Provide weather updates and outfit recommendations', icon: '🌤️' },
+                    { text: 'Search for local events and entertainment options', icon: '🎭' },
+                    { text: 'Assist with shopping and product recommendations', icon: '🛍️' },
+                    { text: 'Help with personal reminders and task management', icon: '📝' },
+                    { text: 'Provide information and answer general questions', icon: '💡' }
+                ]
+            },
+            parallel: {
+                title: 'Parallel Agents',
+                subtitle: 'Multi-Agent Processing',
+                description: 'Multiple AI agents working simultaneously on your requests for faster, comprehensive results<br>Perfect for complex analysis and multi-perspective solutions',
+                prompts: [
+                    { text: 'Analyze this data from multiple perspectives simultaneously', icon: '🤖' },
+                    { text: 'Compare different approaches to solve this problem', icon: '🔄' },
+                    { text: 'Get diverse opinions on this business strategy', icon: '📊' },
+                    { text: 'Process multiple tasks concurrently for efficiency', icon: '⚡' },
+                    { text: 'Cross-validate results using different AI models', icon: '🔍' },
+                    { text: 'Generate multiple creative solutions in parallel', icon: '🎨' },
+                    { text: 'Perform simultaneous research on related topics', icon: '📚' },
+                    { text: 'Execute parallel data processing workflows', icon: '🚀' }
+                ]
+            },
+            sequential: {
+                title: 'Sequential Pipeline',
+                subtitle: 'Step-by-Step Processing',
+                description: 'Agents process your request through structured pipelines for systematic, thorough results<br>Ideal for complex workflows and multi-stage analysis',
+                prompts: [
+                    { text: 'Research topic → Analyze findings → Create report', icon: '🔄' },
+                    { text: 'Collect data → Process information → Generate insights', icon: '📊' },
+                    { text: 'Plan project → Execute steps → Review outcomes', icon: '📅' },
+                    { text: 'Gather requirements → Design solution → Implement plan', icon: '🛠️' },
+                    { text: 'Analyze problem → Develop strategy → Create action plan', icon: '🎯' },
+                    { text: 'Review content → Edit and improve → Finalize output', icon: '✏️' },
+                    { text: 'Investigate issue → Diagnose cause → Propose solution', icon: '🔍' },
+                    { text: 'Brainstorm ideas → Evaluate options → Select best approach', icon: '💡' }
+                ]
+            },
+            loop: {
+                title: 'Loop Processing',
+                subtitle: 'Iterative Refinement',
+                description: 'Continuous improvement through iterative processing until optimal results are achieved<br>Perfect for optimization, refinement, and convergence-based tasks',
+                prompts: [
+                    { text: 'Optimize this strategy until no further improvements', icon: '🔁' },
+                    { text: 'Refine this solution through iterative enhancement', icon: '♾️' },
+                    { text: 'Improve this content until it reaches quality threshold', icon: '🎯' },
+                    { text: 'Iterate on this design until convergence is achieved', icon: '🔄' },
+                    { text: 'Continuously enhance this algorithm performance', icon: '⚡' },
+                    { text: 'Perfect this process through repeated refinement', icon: '🔧' },
+                    { text: 'Evolve this idea through multiple iterations', icon: '🌱' },
+                    { text: 'Polish this output until optimal quality is reached', icon: '✨' }
+                ]
+            }
+        };
+        
         function refreshPrompts() {
-            const promptsContainer = document.querySelector('.prompts');
-            const shuffled = promptSuggestions.sort(() => 0.5 - Math.random()).slice(0, 4);
-            promptsContainer.innerHTML = shuffled.map(prompt => 
-                `<div class="prompt-card" onclick="usePrompt('${prompt.text}')">
-                    <p>${prompt.text}</p>
-                    <div class="prompt-icon">${prompt.icon}</div>
-                </div>`
-            ).join('');
+            const mode = window.currentAgentMode || 'concierge';
+            updateModeUI(mode);
+        }
+        
+        function updateModeUI(mode) {
+            const config = modeConfigs[mode];
+            const app = document.querySelector('.app');
+            
+            // Add fade out effect
+            const content = document.querySelector('.welcome-content');
+            content.style.opacity = '0';
+            content.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                // Update app theme
+                app.className = `app ${mode}-mode`;
+                
+                // Update content
+                document.getElementById('modeTitle').textContent = config.title;
+                document.getElementById('modeSubtitle').textContent = config.subtitle;
+                document.getElementById('modeDescription').innerHTML = config.description;
+                
+                // Update prompts
+                const shuffled = config.prompts.sort(() => 0.5 - Math.random()).slice(0, 4);
+                document.getElementById('modePrompts').innerHTML = shuffled.map(prompt => 
+                    `<div class="prompt-card" onclick="usePrompt('${prompt.text}')">
+                        <p>${prompt.text}</p>
+                        <div class="prompt-icon">${prompt.icon}</div>
+                    </div>`
+                ).join('');
+                
+                // Fade in effect
+                content.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                content.style.opacity = '1';
+                content.style.transform = 'translateY(0)';
+            }, 300);
         }
 
         userInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") sendMessage();
         });
+        
+        function getCurrentMode() {
+            const modeMap = {
+                'concierge': 'single',
+                'parallel': 'parallel', 
+                'sequential': 'sequential',
+                'loop': 'loop'
+            };
+            return modeMap[window.currentAgentMode || 'concierge'];
+        }
+        
+        // Initialize UI components
+        function initializeUI() {
+            console.log('Initializing UI components...');
+            
+            // Remove any existing components
+            document.querySelectorAll('.mode-switcher').forEach(el => el.remove());
+            
+            // Mode switcher button
+            const modeSwitcher = document.createElement('div');
+            modeSwitcher.className = 'mode-switcher';
+            modeSwitcher.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 1001;';
+            
+            const switcherBtn = document.createElement('button');
+            switcherBtn.style.cssText = 'background: #3498db; color: white; border: none; border-radius: 20px; padding: 8px 12px; font-size: 11px; cursor: pointer; box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3); font-weight: bold;';
+            switcherBtn.innerHTML = '🔄 Mode';
+            
+            const switcherPanel = document.createElement('div');
+            switcherPanel.style.cssText = 'position: absolute; top: 40px; right: 0; background: #2a2a2a; border: 1px solid #3a3a3a; border-radius: 8px; padding: 8px; min-width: 180px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: none;';
+            switcherPanel.innerHTML = `
+                <div style="color: #e0e0e0; font-size: 11px; font-weight: bold; margin-bottom: 8px;">🤖 Agent Mode</div>
+                <div class="mode-option" data-mode="concierge" style="padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #27ae60; background: #1a3a1a; margin-bottom: 4px;">🎩 Concierge Agent</div>
+                <div class="mode-option" data-mode="parallel" style="padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #b0b0b0; margin-bottom: 4px;">🤖 Parallel Agents</div>
+                <div class="mode-option" data-mode="sequential" style="padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #b0b0b0; margin-bottom: 4px;">🔄 Sequential Pipeline</div>
+                <div class="mode-option" data-mode="loop" style="padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; color: #b0b0b0;">🔁 Loop Processing</div>
+            `;
+            
+            modeSwitcher.appendChild(switcherBtn);
+            modeSwitcher.appendChild(switcherPanel);
+            document.body.appendChild(modeSwitcher);
+            
+            // Toggle panel
+            switcherBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                switcherPanel.style.display = switcherPanel.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Close panel on outside click
+            document.addEventListener('click', () => {
+                switcherPanel.style.display = 'none';
+            });
+            
+            // Mode selection
+            window.currentAgentMode = 'concierge';
+            switcherPanel.addEventListener('click', (e) => {
+                if (e.target.classList.contains('mode-option')) {
+                    const mode = e.target.dataset.mode;
+                    window.currentAgentMode = mode;
+                    
+                    // Update active state
+                    switcherPanel.querySelectorAll('.mode-option').forEach(opt => {
+                        opt.style.background = 'transparent';
+                        opt.style.color = '#b0b0b0';
+                    });
+                    e.target.style.background = '#1a3a1a';
+                    e.target.style.color = '#27ae60';
+                    
+                    switcherPanel.style.display = 'none';
+                    updateModeUI(mode);
+                }
+            });
+            
+            // Initialize with concierge mode
+            updateModeUI('concierge');
+            
+
+            
+            console.log('UI components initialized');
+        }
+        
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeUI);
+        } else {
+            initializeUI();
+        }
+        
+        console.log('AI Concierge UI loaded');
     </script>
 </body>
 </html>

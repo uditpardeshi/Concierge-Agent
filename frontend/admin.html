@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent System - Admin Dashboard</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .header { background: #2c3e50; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
+        .nav { display: flex; gap: 1rem; }
+        .nav-btn { background: none; border: 1px solid #34495e; color: white; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
+        .nav-btn.active { background: #3498db; border-color: #3498db; }
+        .nav-btn:hover { background: #34495e; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .section { background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .section h2 { margin-bottom: 1rem; color: #2c3e50; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .card { border: 1px solid #ddd; border-radius: 6px; padding: 1rem; }
+        .status { padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+        .status.running { background: #d4edda; color: #155724; }
+        .status.paused { background: #fff3cd; color: #856404; }
+        .status.failed { background: #f8d7da; color: #721c24; }
+        .btn { background: #3498db; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; margin: 0.25rem; transition: all 0.2s ease; }
+        .btn:hover { background: #2980b9; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn.danger { background: #e74c3c; }
+        .btn.danger:hover { background: #c0392b; }
+        .btn.success { background: #27ae60; }
+        .btn.success:hover { background: #229954; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        .metric-card { text-align: center; padding: 1rem; background: #ecf0f1; border-radius: 6px; }
+        .metric-value { font-size: 2rem; font-weight: bold; color: #2c3e50; }
+        .metric-label { color: #7f8c8d; font-size: 0.9rem; }
+        .hidden { display: none; }
+        .execution-mode { margin: 1rem 0; }
+        .mode-selector { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+        .mode-btn { padding: 0.5rem 1rem; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 4px; }
+        .mode-btn.active { background: #3498db; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Multi-Agent System Admin</h1>
+        <div class="nav">
+            <button class="nav-btn active" onclick="showSection('agents')">Agents</button>
+            <button class="nav-btn" onclick="showSection('deployment')">Deployment</button>
+            <button class="nav-btn" onclick="showSection('metrics')">Metrics</button>
+            <button class="nav-btn" onclick="showSection('sessions')">Sessions</button>
+            <button class="nav-btn" onclick="showSection('chat')">Enhanced Chat</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Agents Section -->
+        <div id="agents-section" class="section">
+            <h2>Agent Management</h2>
+            
+            <div class="form-group">
+                <button class="btn success" onclick="showCreateAgentForm()">Create New Agent</button>
+                <button class="btn" onclick="loadAgents()">Refresh</button>
+            </div>
+
+            <div id="create-agent-form" class="card hidden">
+                <h3>Create New Agent</h3>
+                <div class="form-group">
+                    <label>Agent ID:</label>
+                    <input type="text" id="agent-id" placeholder="unique_agent_id">
+                </div>
+                <div class="form-group">
+                    <label>Name:</label>
+                    <input type="text" id="agent-name" placeholder="Agent Name">
+                </div>
+                <div class="form-group">
+                    <label>System Prompt:</label>
+                    <textarea id="agent-prompt" rows="4" placeholder="You are a helpful AI assistant..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Model:</label>
+                    <select id="agent-model">
+                        <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+                        <option value="llama-3.1-8b-instant">Llama 3.1 8B</option>
+                    </select>
+                </div>
+                <button class="btn success" onclick="createAgent()">Create Agent</button>
+                <button class="btn" onclick="hideCreateAgentForm()">Cancel</button>
+            </div>
+
+            <div id="agents-list" class="grid"></div>
+        </div>
+
+        <!-- Deployment Section -->
+        <div id="deployment-section" class="section hidden">
+            <h2>Agent Deployment</h2>
+            
+            <div class="form-group">
+                <button class="btn success" onclick="showDeployForm()">Deploy Agent</button>
+                <button class="btn" onclick="loadDeployments()">Refresh</button>
+            </div>
+
+            <div id="deploy-form" class="card hidden">
+                <h3>Deploy Agent</h3>
+                <div class="form-group">
+                    <label>Agent ID:</label>
+                    <input type="text" id="deploy-agent-id" placeholder="agent_id">
+                </div>
+                <div class="form-group">
+                    <label>Replicas:</label>
+                    <input type="number" id="deploy-replicas" value="1" min="1" max="10">
+                </div>
+                <button class="btn success" onclick="deployAgent()">Deploy</button>
+                <button class="btn" onclick="hideDeployForm()">Cancel</button>
+            </div>
+
+            <div id="deployments-list" class="grid"></div>
+        </div>
+
+        <!-- Metrics Section -->
+        <div id="metrics-section" class="section hidden">
+            <h2>System Metrics</h2>
+            
+            <div class="form-group">
+                <button class="btn" onclick="loadMetrics()">Refresh Metrics</button>
+                <button class="btn" onclick="loadHealth()">Check Health</button>
+            </div>
+
+            <div id="health-status" class="metrics"></div>
+            <div id="system-metrics" class="metrics"></div>
+        </div>
+
+        <!-- Sessions Section -->
+        <div id="sessions-section" class="section hidden">
+            <h2>Session Management</h2>
+            
+            <div class="form-group">
+                <label>Session ID:</label>
+                <input type="text" id="session-lookup" placeholder="session_id">
+                <button class="btn" onclick="loadSession()">Load Session</button>
+            </div>
+
+            <div id="session-details"></div>
+        </div>
+
+        <!-- Enhanced Chat Section -->
+        <div id="chat-section" class="section hidden">
+            <h2>Enhanced Chat Interface</h2>
+            
+            <div class="execution-mode">
+                <label>Execution Mode:</label>
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="single">Single</button>
+                    <button class="mode-btn" data-mode="parallel">Parallel</button>
+                    <button class="mode-btn" data-mode="sequential">Sequential</button>
+                    <button class="mode-btn" data-mode="loop">Loop</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Message:</label>
+                <textarea id="chat-message" rows="3" placeholder="Enter your message..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>Session ID:</label>
+                <input type="text" id="chat-session" value="admin_session" placeholder="session_id">
+            </div>
+
+            <button class="btn success" onclick="sendEnhancedMessage()">Send Message</button>
+
+            <div id="chat-response" class="card" style="margin-top: 1rem; min-height: 200px; background: #f8f9fa;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "";
+        let currentMode = "single";
+
+        // Navigation
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            // Load data for the section
+            if (section === 'agents') loadAgents();
+            if (section === 'deployment') loadDeployments();
+            if (section === 'metrics') { loadMetrics(); loadHealth(); }
+        }
+
+        // Agent Management
+        function showCreateAgentForm() {
+            document.getElementById('create-agent-form').classList.remove('hidden');
+        }
+
+        function hideCreateAgentForm() {
+            document.getElementById('create-agent-form').classList.add('hidden');
+        }
+
+        async function createAgent() {
+            const agentId = document.getElementById('agent-id').value.trim();
+            const agentName = document.getElementById('agent-name').value.trim();
+            const agentPrompt = document.getElementById('agent-prompt').value.trim();
+            const agentModel = document.getElementById('agent-model').value;
+            
+            if (!agentId || !agentName || !agentPrompt) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            const data = {
+                agent_id: agentId,
+                name: agentName,
+                system_prompt: agentPrompt,
+                model: agentModel
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/agents`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`Agent '${agentName}' created successfully!`);
+                    document.getElementById('agent-id').value = '';
+                    document.getElementById('agent-name').value = '';
+                    document.getElementById('agent-prompt').value = '';
+                    hideCreateAgentForm();
+                    loadAgents();
+                } else {
+                    alert('Failed to create agent: ' + (result.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error creating agent: ' + error.message);
+            }
+        }
+
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_URL}/agents`);
+                const data = await response.json();
+                
+                const container = document.getElementById('agents-list');
+                container.innerHTML = data.agents.map(agent => `
+                    <div class="card">
+                        <h3>${agent.name}</h3>
+                        <p><strong>ID:</strong> ${agent.agent_id}</p>
+                        <p><strong>State:</strong> <span class="status ${agent.state}">${agent.state}</span></p>
+                        <div>
+                            <button class="btn" onclick="pauseAgent('${agent.agent_id}')">Pause</button>
+                            <button class="btn success" onclick="resumeAgent('${agent.agent_id}')">Resume</button>
+                            <button class="btn" onclick="viewAgent('${agent.agent_id}')">Details</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load agents:', error);
+            }
+        }
+
+        async function pauseAgent(agentId) {
+            try {
+                const response = await fetch(`${API_URL}/agents/${agentId}/pause`, { method: 'POST' });
+                if (response.ok) {
+                    alert(`Agent ${agentId} paused successfully`);
+                    loadAgents();
+                } else {
+                    alert('Failed to pause agent');
+                }
+            } catch (error) {
+                alert('Failed to pause agent: ' + error.message);
+            }
+        }
+
+        async function resumeAgent(agentId) {
+            try {
+                const response = await fetch(`${API_URL}/agents/${agentId}/resume`, { method: 'POST' });
+                if (response.ok) {
+                    alert(`Agent ${agentId} resumed successfully`);
+                    loadAgents();
+                } else {
+                    alert('Failed to resume agent');
+                }
+            } catch (error) {
+                alert('Failed to resume agent: ' + error.message);
+            }
+        }
+        
+        async function viewAgent(agentId) {
+            try {
+                const response = await fetch(`${API_URL}/agents/${agentId}`);
+                const data = await response.json();
+                
+                const details = `Agent Details:\n\nID: ${data.agent_id}\nName: ${data.name}\nState: ${data.state}\nModel: ${data.model || 'N/A'}\nTools: ${data.tools ? data.tools.join(', ') : 'None'}\n\nMetrics:\nExecutions: ${data.metrics?.execution_count || 0}\nSuccess: ${data.metrics?.success_count || 0}\nErrors: ${data.metrics?.error_count || 0}`;
+                
+                alert(details);
+            } catch (error) {
+                alert('Failed to get agent details: ' + error.message);
+            }
+        }
+
+        // Deployment Management
+        function showDeployForm() {
+            document.getElementById('deploy-form').classList.remove('hidden');
+        }
+
+        function hideDeployForm() {
+            document.getElementById('deploy-form').classList.add('hidden');
+        }
+
+        async function deployAgent() {
+            const agentId = document.getElementById('deploy-agent-id').value.trim();
+            const replicas = parseInt(document.getElementById('deploy-replicas').value);
+            
+            if (!agentId) {
+                alert('Please enter an agent ID');
+                return;
+            }
+            
+            const data = {
+                agent_id: agentId,
+                replicas: replicas
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/deploy`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`Agent '${agentId}' deployed with ${replicas} replicas!`);
+                    document.getElementById('deploy-agent-id').value = '';
+                    document.getElementById('deploy-replicas').value = '1';
+                    hideDeployForm();
+                    loadDeployments();
+                } else {
+                    alert('Failed to deploy agent: ' + (result.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Error deploying agent: ' + error.message);
+            }
+        }
+
+        async function loadDeployments() {
+            try {
+                const response = await fetch(`${API_URL}/deployments`);
+                const data = await response.json();
+                
+                const container = document.getElementById('deployments-list');
+                container.innerHTML = data.deployments.map(deployment => `
+                    <div class="card">
+                        <h3>${deployment.agent_id}</h3>
+                        <p><strong>Status:</strong> <span class="status ${deployment.status}">${deployment.status}</span></p>
+                        <p><strong>Replicas:</strong> ${deployment.replicas}</p>
+                        <p><strong>Endpoints:</strong> ${deployment.endpoints.length}</p>
+                        <div>
+                            <button class="btn" onclick="scaleDeployment('${deployment.agent_id}')">Scale</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load deployments:', error);
+            }
+        }
+
+        async function scaleDeployment(agentId) {
+            const replicas = prompt('Enter number of replicas:', '2');
+            if (replicas) {
+                try {
+                    await fetch(`${API_URL}/scale`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ agent_id: agentId, replicas: parseInt(replicas) })
+                    });
+                    loadDeployments();
+                } catch (error) {
+                    alert('Failed to scale deployment');
+                }
+            }
+        }
+
+        // Metrics and Health
+        async function loadMetrics() {
+            try {
+                const response = await fetch(`${API_URL}/metrics`);
+                const data = await response.json();
+                
+                const container = document.getElementById('system-metrics');
+                container.innerHTML = Object.entries(data).map(([name, metric]) => `
+                    <div class="metric-card">
+                        <div class="metric-value">${metric.latest || 0}</div>
+                        <div class="metric-label">${name}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load metrics:', error);
+            }
+        }
+
+        async function loadHealth() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                const container = document.getElementById('health-status');
+                container.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-value">${data.system.health_score.toFixed(1)}</div>
+                        <div class="metric-label">Health Score</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${data.system.active_agents}</div>
+                        <div class="metric-label">Active Agents</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${data.system.error_rate.toFixed(3)}</div>
+                        <div class="metric-label">Error Rate</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load health:', error);
+            }
+        }
+
+        // Session Management
+        async function loadSession() {
+            const sessionId = document.getElementById('session-lookup').value;
+            if (!sessionId) return;
+
+            try {
+                const response = await fetch(`${API_URL}/sessions/${sessionId}`);
+                const data = await response.json();
+                
+                document.getElementById('session-details').innerHTML = `
+                    <div class="card">
+                        <h3>Session: ${sessionId}</h3>
+                        <p><strong>Created:</strong> ${data.session.created_at}</p>
+                        <p><strong>Messages:</strong> ${data.session.messages.length}</p>
+                        <p><strong>Episodes:</strong> ${data.memory.episodic_count}</p>
+                        <pre>${JSON.stringify(data.memory.long_term_memory, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('session-details').innerHTML = '<p>Session not found</p>';
+            }
+        }
+
+        // Enhanced Chat
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+            });
+        });
+
+        async function sendEnhancedMessage() {
+            const message = document.getElementById('chat-message').value.trim();
+            const sessionId = document.getElementById('chat-session').value.trim();
+            
+            if (!message) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            if (!sessionId) {
+                alert('Please enter a session ID');
+                return;
+            }
+            
+            const responseDiv = document.getElementById('chat-response');
+            responseDiv.innerHTML = '<p>Processing...</p>';
+
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: message,
+                        session_id: sessionId,
+                        execution_mode: currentMode
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    responseDiv.innerHTML = `
+                        <h4>Response (${currentMode.toUpperCase()} mode):</h4>
+                        <div style="background: white; padding: 1rem; border-radius: 4px; margin: 0.5rem 0;">
+                            <p style="margin: 0; white-space: pre-wrap;">${data.response}</p>
+                        </div>
+                        <small style="color: #666;">Session: ${sessionId} | Mode: ${currentMode}</small>
+                    `;
+                } else {
+                    responseDiv.innerHTML = `<p style="color: red;">Error: ${data.detail || 'Unknown error'}</p>`;
+                }
+                
+                document.getElementById('chat-message').value = '';
+            } catch (error) {
+                responseDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        // Initialize
+        loadAgents();
+    </script>
+</body>
+</html>

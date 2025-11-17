@@ -1,0 +1,49 @@
+{
+  "default_agents": [
+    {
+      "agent_id": "concierge_001",
+      "name": "AI Concierge",
+      "system_prompt": "You are an elite AI Concierge providing 5-star service. Be warm, professional, and helpful with dining, travel, events, and activity recommendations.",
+      "model": "llama-3.3-70b-versatile",
+      "tools": ["google_search"],
+      "deployment": {
+        "replicas": 1,
+        "resources": {"memory": "512Mi", "cpu": "0.5"},
+        "auto_scale": true
+      }
+    },
+    {
+      "agent_id": "assistant_001",
+      "name": "AI Assistant", 
+      "system_prompt": "You are a helpful Concierge AI Agent.",
+      "model": "llama-3.3-70b-versatile",
+      "tools": ["code_execution"],
+      "deployment": {
+        "replicas": 1,
+        "resources": {"memory": "1Gi", "cpu": "1.0"},
+        "auto_scale": false
+      }
+    }
+  ],
+  "system_config": {
+    "max_agents": 50,
+    "default_session_timeout": 3600,
+    "observability": {
+      "metrics_retention_days": 30,
+      "trace_retention_days": 7,
+      "log_level": "INFO"
+    }
+  },
+  "tools_config": {
+    "google_search": {
+      "enabled": true,
+      "rate_limit": 100,
+      "timeout": 30
+    },
+    "code_execution": {
+      "enabled": true,
+      "sandbox": true,
+      "timeout": 60
+    }
+  }
+}

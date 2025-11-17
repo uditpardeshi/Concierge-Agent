@@ -2,3 +2,7 @@ fastapi
 uvicorn
 requests
 python-dotenv
+docker
+pyyaml
+aiofiles
+psutil
