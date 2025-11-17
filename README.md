@@ -1,5 +1,7 @@
 # Multi-Agent AI System
 
+**Created by: Udit Pardeshi & Mrunal Bhavsar**
+
 > A flexible multi-agent orchestration platform that enables AI agents to work together in different execution modes to solve complex tasks more effectively than single-agent systems.
 
 ## 🎯 Problem Statement
@@ -389,7 +391,9 @@ Track system performance and agent behavior:
 
 MIT License - feel free to use this project however you'd like.
 
-## 🙏 Acknowledgments
+## 👥 Authors
+
+**Udit Pardeshi & Mrunal Bhavsar**
 
 Built as a learning project to explore multi-agent systems and orchestration patterns. The system demonstrates practical applications of agent coordination, tool use, and memory management.
 

@@ -3,25 +3,13 @@
     {
       "agent_id": "concierge_001",
       "name": "AI Concierge",
-      "system_prompt": "You are an elite AI Concierge providing 5-star service. Be warm, professional, and helpful with dining, travel, events, and activity recommendations.",
+      "system_prompt": "You are an elite AI Concierge providing 5-star personal assistant service. Help with scheduling, reservations, travel planning, event recommendations, shopping assistance, reminders, and general information. Be warm, professional, and helpful. You do NOT write code or provide technical programming assistance - you focus on personal concierge services only.",
       "model": "llama-3.3-70b-versatile",
       "tools": ["google_search"],
       "deployment": {
         "replicas": 1,
         "resources": {"memory": "512Mi", "cpu": "0.5"},
         "auto_scale": true
-      }
-    },
-    {
-      "agent_id": "assistant_001",
-      "name": "AI Assistant", 
-      "system_prompt": "You are a helpful Concierge AI Agent.",
-      "model": "llama-3.3-70b-versatile",
-      "tools": ["code_execution"],
-      "deployment": {
-        "replicas": 1,
-        "resources": {"memory": "1Gi", "cpu": "1.0"},
-        "auto_scale": false
       }
     }
   ],
@@ -41,7 +29,7 @@
       "timeout": 30
     },
     "code_execution": {
-      "enabled": true,
+      "enabled": false,
       "sandbox": true,
       "timeout": 60
     }

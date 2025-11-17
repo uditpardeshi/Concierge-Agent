@@ -1,5 +1,8 @@
 # Project Submission Details
 
+## Authors
+**Udit Pardeshi & Mrunal Bhavsar**
+
 ## Title
 **AgentOrchestra: Intelligent Multi-Agent Coordination Platform**
 
@@ -60,7 +63,7 @@ Agents are the perfect abstraction for this problem because they provide autonom
 
 **Conclusion:**
 
-AgentOrchestra represents a practical, production-ready approach to multi-agent AI systems. It demonstrates deep understanding of agent coordination patterns, implements multiple key concepts with professional-quality code, provides comprehensive documentation and architecture diagrams, and delivers real value through flexible execution modes that adapt to different task requirements. The system is ready for real-world deployment while serving as an excellent educational example of multi-agent system design and implementation.
+AgentOrchestra represents a practical, production-ready approach to multi-agent AI systems developed by Udit Pardeshi and Mrunal Bhavsar. It demonstrates deep understanding of agent coordination patterns, implements multiple key concepts with professional-quality code, provides comprehensive documentation and architecture diagrams, and delivers real value through flexible execution modes that adapt to different task requirements. The system is ready for real-world deployment while serving as an excellent educational example of multi-agent system design and implementation.
 
 ---
 
